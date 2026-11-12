@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Router } from 'express';
 import {
   createGroup,
   getUserGroups,
@@ -12,7 +12,7 @@ import {
 } from '../controllers/expenseController.js';
 import { protect } from '../middleware/auth.js';
 
-const router = express.Router();
+const router: Router = express.Router();
 
 router.use(protect);
 

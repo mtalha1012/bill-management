@@ -1,6 +1,15 @@
-import mongoose from 'mongoose';
+import mongoose, { Types } from 'mongoose';
 
-const groupSchema = new mongoose.Schema(
+export interface IGroup {
+  name: string;
+  description: string;
+  owner: Types.ObjectId;
+  members: Types.ObjectId[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const groupSchema = new mongoose.Schema<IGroup>(
   {
     name: {
       type: String,
@@ -29,6 +38,6 @@ const groupSchema = new mongoose.Schema(
   }
 );
 
-const Group = mongoose.model('Group', groupSchema);
+const Group = mongoose.model<IGroup>('Group', groupSchema);
 
 export default Group;

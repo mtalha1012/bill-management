@@ -1,0 +1,41 @@
+.groups-layout {
+    display: grid;
+    grid-template-columns: minmax(16rem, 20rem) 1fr;
+    gap: 1.5rem;
+    align-items: start;
+}
+
+.groups-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.group-item {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.4rem;
+    padding: 1rem;
+    text-align: left;
+    background: var(--card);
+    color: var(--card-foreground);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+.group-item:hover {
+    background: var(--muted);
+}
+
+.group-item-name {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+@media (max-width: 720px) {
+    .groups-layout {
+        grid-template-columns: 1fr;
+    }
+}

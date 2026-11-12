@@ -1,6 +1,26 @@
-import mongoose from 'mongoose';
+import mongoose, { Types } from 'mongoose';
 
-const expenseSchema = new mongoose.Schema(
+export enum ExpenseCategory {
+  Groceries = 'groceries',
+  Rent = 'rent',
+  Utilities = 'utilities',
+  Entertainment = 'entertainment',
+  Other = 'other'
+}
+
+export interface IExpense {
+  description: string;
+  amount: number;
+  group: Types.ObjectId;
+  paidBy: Types.ObjectId;
+  splitAmong: Types.ObjectId[];
+  category: ExpenseCategory;
+  date: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const expenseSchema = new mongoose.Schema<IExpense>(
   {
     description: {
       type: String,
@@ -32,10 +52,10 @@ const expenseSchema = new mongoose.Schema(
     category: {
       type: String,
       enum: {
-        values: ['groceries', 'rent', 'utilities', 'entertainment', 'other'],
+        values: Object.values(ExpenseCategory),
         message: '{VALUE} is not a valid category'
       },
-      default: 'other'
+      default: ExpenseCategory.Other
     },
     date: {
       type: Date,
@@ -47,6 +67,6 @@ const expenseSchema = new mongoose.Schema(
   }
 );
 
-const Expense = mongoose.model('Expense', expenseSchema);
+const Expense = mongoose.model<IExpense>('Expense', expenseSchema);
 
 export default Expense;

@@ -1,0 +1,84 @@
+.group-page {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.group-heading {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+
+.group-back {
+    align-self: flex-start;
+}
+
+.group-name {
+    font-size: 1.35rem;
+    font-weight: 700;
+    line-height: 1.25;
+}
+
+.group-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+    gap: 1.25rem;
+    align-items: start;
+}
+
+.group-column {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.group-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+}
+
+.group-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+}
+
+.group-row,
+.expense-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.group-row:last-child,
+.expense-row:last-child {
+    border-bottom: none;
+}
+
+.expense-main {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.expense-side {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.25rem;
+}
+
+.amount-positive {
+    font-weight: 600;
+}
+
+.amount-negative {
+    font-weight: 600;
+    color: var(--destructive);
+}

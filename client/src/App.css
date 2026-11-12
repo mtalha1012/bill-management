@@ -1,0 +1,58 @@
+.app-shell {
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 3rem 1.5rem;
+    background: var(--background);
+    color: var(--foreground);
+}
+
+.app-loading {
+    font-size: 0.85rem;
+    color: var(--muted-foreground);
+}
+
+.app-page {
+    width: 100%;
+    max-width: 64rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.form-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.form-row {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.form-error {
+    font-size: 0.8rem;
+    color: var(--destructive);
+}
+
+.muted-text {
+    font-size: 0.8rem;
+    color: var(--muted-foreground);
+}
+
+.section-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted-foreground);
+    font-weight: 600;
+}
+
+.tag {
+    font-size: 0.7rem;
+    padding: 0.15rem 0.5rem;
+    background: var(--muted);
+    text-transform: capitalize;
+}

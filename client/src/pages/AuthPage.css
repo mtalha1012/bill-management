@@ -1,0 +1,30 @@
+.auth-card {
+    width: 100%;
+    max-width: 28rem;
+    margin: 0 auto;
+    padding: 2rem;
+    position: relative;
+}
+
+.auth-theme-toggle {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+}
+
+.auth-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.auth-subtitle {
+    font-size: 0.9rem;
+    color: var(--muted-foreground);
+}
+
+.auth-tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+}

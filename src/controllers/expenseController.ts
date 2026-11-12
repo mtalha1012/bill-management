@@ -1,8 +1,32 @@
-import Expense from '../models/Expense.js';
+import { Types } from 'mongoose';
+import Expense, { ExpenseCategory, IExpense } from '../models/Expense.js';
 import Group from '../models/Group.js';
 import { AppError, asyncHandler } from '../middleware/error.js';
+import { getAuthUser } from '../middleware/auth.js';
+import {
+  ApiResponse,
+  CreateExpenseBody,
+  GroupBalances,
+  IdParams,
+  MemberBalance,
+  MessageResponse,
+  PublicUser,
+  Settlement
+} from '../types/api.js';
 
-export const createExpense = asyncHandler(async (req, res, next) => {
+export type PopulatedExpense = Omit<IExpense, 'paidBy' | 'splitAmong'> & {
+  _id: Types.ObjectId;
+  paidBy: PublicUser;
+  splitAmong: PublicUser[];
+};
+
+type ExpensePopulate = { paidBy: PublicUser; splitAmong: PublicUser[] };
+
+const isExpenseCategory = (value: unknown): value is ExpenseCategory =>
+  Object.values(ExpenseCategory).includes(value as ExpenseCategory);
+
+export const createExpense = asyncHandler<IdParams, ApiResponse<PopulatedExpense>, CreateExpenseBody>(async (req, res, next) => {
+  const user = getAuthUser(req);
   const group = await Group.findById(req.params.id);
 
   if (!group) {
@@ -10,7 +34,7 @@ export const createExpense = asyncHandler(async (req, res, next) => {
   }
 
   const isMember = group.members.some(
-    (memberId) => memberId.toString() === req.user._id.toString()
+    (memberId) => memberId.toString() === user._id.toString()
   );
 
   if (!isMember) {
@@ -23,12 +47,16 @@ export const createExpense = asyncHandler(async (req, res, next) => {
     return next(new AppError('Description and amount are required', 400));
   }
 
+  if (category !== undefined && !isExpenseCategory(category)) {
+    return next(new AppError(`${category} is not a valid category`, 400));
+  }
+
   const parsedAmount = Number(amount);
   if (isNaN(parsedAmount) || parsedAmount <= 0) {
     return next(new AppError('Amount must be a positive number', 400));
   }
 
-  const payerId = paidBy || req.user._id;
+  const payerId = paidBy || user._id;
   const isPayerMember = group.members.some(
     (memberId) => memberId.toString() === payerId.toString()
   );
@@ -37,11 +65,11 @@ export const createExpense = asyncHandler(async (req, res, next) => {
     return next(new AppError('Payer must be a member of the group', 400));
   }
 
-  let recipients = splitAmong;
-  if (!recipients || !Array.isArray(recipients) || recipients.length === 0) {
+  let recipients: string[];
+  if (!splitAmong || !Array.isArray(splitAmong) || splitAmong.length === 0) {
     recipients = group.members.map((m) => m.toString());
   } else {
-    recipients = [...new Set(recipients.map((id) => id.toString()))];
+    recipients = [...new Set(splitAmong.map((id) => id.toString()))];
   }
 
   const groupMemberStrings = group.members.map((m) => m.toString());
@@ -61,19 +89,20 @@ export const createExpense = asyncHandler(async (req, res, next) => {
     group: group._id,
     paidBy: payerId,
     splitAmong: recipients,
-    category: category || 'other',
+    category: category || ExpenseCategory.Other,
     date: date || new Date()
   });
 
-  await expense.populate('paidBy splitAmong', 'name email');
+  const populated = await expense.populate<ExpensePopulate>('paidBy splitAmong', 'name email');
 
   res.status(201).json({
     success: true,
-    data: expense
+    data: populated
   });
 });
 
-export const getGroupExpenses = asyncHandler(async (req, res, next) => {
+export const getGroupExpenses = asyncHandler<IdParams, ApiResponse<PopulatedExpense[]>>(async (req, res, next) => {
+  const user = getAuthUser(req);
   const group = await Group.findById(req.params.id);
 
   if (!group) {
@@ -81,7 +110,7 @@ export const getGroupExpenses = asyncHandler(async (req, res, next) => {
   }
 
   const isMember = group.members.some(
-    (memberId) => memberId.toString() === req.user._id.toString()
+    (memberId) => memberId.toString() === user._id.toString()
   );
 
   if (!isMember) {
@@ -89,7 +118,7 @@ export const getGroupExpenses = asyncHandler(async (req, res, next) => {
   }
 
   const expenses = await Expense.find({ group: req.params.id })
-    .populate('paidBy splitAmong', 'name email')
+    .populate<ExpensePopulate>('paidBy splitAmong', 'name email')
     .sort({ date: -1, createdAt: -1 });
 
   res.status(200).json({
@@ -99,7 +128,8 @@ export const getGroupExpenses = asyncHandler(async (req, res, next) => {
   });
 });
 
-export const deleteExpense = asyncHandler(async (req, res, next) => {
+export const deleteExpense = asyncHandler<IdParams, MessageResponse>(async (req, res, next) => {
+  const user = getAuthUser(req);
   const expense = await Expense.findById(req.params.id);
 
   if (!expense) {
@@ -108,8 +138,8 @@ export const deleteExpense = asyncHandler(async (req, res, next) => {
 
   const group = await Group.findById(expense.group);
 
-  const isPayer = expense.paidBy.toString() === req.user._id.toString();
-  const isOwner = group && group.owner.toString() === req.user._id.toString();
+  const isPayer = expense.paidBy.toString() === user._id.toString();
+  const isOwner = group && group.owner.toString() === user._id.toString();
 
   if (!isPayer && !isOwner) {
     return next(
@@ -128,8 +158,9 @@ export const deleteExpense = asyncHandler(async (req, res, next) => {
   });
 });
 
-export const getGroupBalances = asyncHandler(async (req, res, next) => {
-  const group = await Group.findById(req.params.id).populate(
+export const getGroupBalances = asyncHandler<IdParams, ApiResponse<GroupBalances>>(async (req, res, next) => {
+  const user = getAuthUser(req);
+  const group = await Group.findById(req.params.id).populate<{ members: PublicUser[] }>(
     'members',
     'name email'
   );
@@ -139,7 +170,7 @@ export const getGroupBalances = asyncHandler(async (req, res, next) => {
   }
 
   const isMember = group.members.some(
-    (member) => member._id.toString() === req.user._id.toString()
+    (member) => member._id.toString() === user._id.toString()
   );
 
   if (!isMember) {
@@ -148,7 +179,7 @@ export const getGroupBalances = asyncHandler(async (req, res, next) => {
 
   const expenses = await Expense.find({ group: req.params.id });
 
-  const balancesMap = {};
+  const balancesMap: Record<string, MemberBalance> = {};
 
   group.members.forEach((member) => {
     balancesMap[member._id.toString()] = {
@@ -207,7 +238,7 @@ export const getGroupBalances = asyncHandler(async (req, res, next) => {
     .map((item) => ({ ...item, remaining: Math.abs(item.net) }))
     .sort((a, b) => b.remaining - a.remaining);
 
-  const settlements = [];
+  const settlements: Settlement[] = [];
   let cIndex = 0;
   let dIndex = 0;
 
